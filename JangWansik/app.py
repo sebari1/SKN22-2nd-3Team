@@ -23,8 +23,7 @@ st.markdown(
         background-color: #1DB954; color: white; border-radius: 20px; border: none; font-weight: bold; width: 100%; height: 50px; font-size: 18px;
     }
     div[role="radiogroup"] > label > div:first-child {
-        background-color: #1DB954 !important;
-        border-color: #1DB954 !important;
+        background-color: #1DB954 !important; color: #1DB954 !important; border-color: #1DB954 !important;
     }
     .report-card {
         background-color: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 0px; margin-top: 20px; overflow: hidden;
@@ -53,6 +52,7 @@ st.markdown(
 @st.cache_resource
 def load_ml_model():
     try:
+        # 이 모델은 get_best_model_info()에서 선정된 ML 모델의 파이프라인 (.pkl)입니다.
         return joblib.load('models/spotify_churn_model.pkl')
     except:
         return None
@@ -67,14 +67,16 @@ def load_dl_model_and_scaler():
         if os.path.exists(model_path):
             model = tf.keras.models.load_model(model_path)
     except Exception as e:
-        st.error(f"DL 모델 로딩 실패: {e}")
+        #st.error(f"DL 모델 로딩 실패: {e}")
+        pass
 
     try:
         scaler_path = 'models/dl_preprocessor.pkl'
         if os.path.exists(scaler_path):
             scaler = joblib.load(scaler_path)
     except Exception as e:
-        st.error(f"전처리기 로딩 실패: {e}")
+        #st.error(f"전처리기 로딩 실패: {e}")
+        pass
         
     return model, scaler
 
@@ -85,25 +87,50 @@ def load_metrics():
     except:
         return {}
 
+# ML 모델 중 F1-Score가 가장 높은 모델을 찾습니다. (Prediction 페이지의 ML 옵션용)
 def get_best_model_info():
     metrics = load_metrics()
     best_name = "Optimized ML Model"
     best_thresh = 0.5
+    max_f1 = -1
     
+    # ML 모델(DNN 제외) 중 F1-Score가 가장 높고 Best Threshold가 있는 모델을 찾음
     for name, data in metrics.items():
-        if 'Best Threshold' in data and name != "Deep Learning (DNN)":
-            best_name = name
-            best_thresh = data['Best Threshold']
-            break
-            
+        if name != "Deep Learning (DNN)" and 'F1-Score' in data and 'Best Threshold' in data:
+            if data['F1-Score'] > max_f1:
+                max_f1 = data['F1-Score']
+                best_name = name
+                best_thresh = data['Best Threshold']
+    
+    # 만약 유효한 ML 모델이 없으면 RandomForest의 임계값으로 대체 (안전장치)
+    if max_f1 == -1 and 'RandomForest' in metrics and 'Best Threshold' in metrics['RandomForest']:
+         best_thresh = metrics['RandomForest']['Best Threshold']
+         
     return best_name, best_thresh
 
+# [절대적인 최고 성능 모델을 찾는 함수] - Dashboard의 추천 모델 선정에 사용
+def get_absolute_best_model_name():
+    metrics = load_metrics()
+    best_name = "최고 성능 모델"
+    max_f1 = -1
+    
+    for name, data in metrics.items():
+        if 'F1-Score' in data:
+            if data['F1-Score'] > max_f1:
+                max_f1 = data['F1-Score']
+                best_name = name
+                
+    return best_name
+
+
 def make_radar_chart(input_data):
+    # 특성 값 정규화/스케일링 로직
+    # 참고: ad_burden, skip_rate 등은 0-1 사이로 스케일링
     immersion = min(input_data['listening_time'][0] / 60, 1.0) * 100
     satisfaction = (1 - input_data['skip_rate'][0]) * 100
     activity = min(input_data['songs_played_per_day'][0] / 30, 1.0) * 100
     ad_burden = input_data['ad_burden'][0]
-    tolerance = max(0, (1 - (ad_burden * 2))) * 100
+    tolerance = max(0, (1 - min(ad_burden * 3, 1.0))) * 100 # ad_burden이 높을수록 tolerance 낮아짐
     
     loyalty = 50
     if input_data['offline_listening'][0] == 1: loyalty += 30
@@ -196,7 +223,8 @@ def page_dashboard():
     st.title("📊 모델 성능 비교 대시보드")
     col1, col2 = st.columns([2, 1])
     
-    best_model_name, _ = get_best_model_info()
+    # [최고 성능 모델 동적 선정]
+    absolute_best_model_name = get_absolute_best_model_name()
     
     with col1:
         st.subheader("모델별 정확도(Accuracy) & F1-Score")
@@ -227,10 +255,10 @@ def page_dashboard():
         st.info("💡 모델 선정 분석")
         if metrics:
             st.markdown(f"""
-            **🏆 추천 모델: {best_model_name}**
+            **🏆 추천 모델: {absolute_best_model_name}**
             
             **선정 이유:**
-            1. **최고 성능:** 후보 모델 중 높은 F1-Score 기록
+            1. **최고 성능:** 후보 모델 중 F1-Score가 가장 높아 이탈 사용자 탐지에 가장 효과적임
             2. **안정성:** 과적합 위험이 적음
             3. **효율성:** 실시간 예측에 적합
             """)
@@ -238,7 +266,9 @@ def page_dashboard():
 def page_prediction():
     st.title("🔮 실전 이탈 예측 & 심층 분석")
     
+    # ML/DL 각각의 정보를 로드
     best_ml_name, best_ml_threshold = get_best_model_info()
+    absolute_best_name = get_absolute_best_model_name() # 현재 최고 성능 모델 이름
     
     st.sidebar.header("1. 사용자 정보 입력")
     age = st.sidebar.slider("나이 (Age)", 10, 80, 25)
@@ -258,16 +288,24 @@ def page_prediction():
     
     st.sidebar.header("3. 모델 선택")
     
-    ml_label = f"{best_ml_name} (ML)"
+    ml_label = f"{best_ml_name} (ML)" 
     dl_label = "Deep Learning (DNN)"
-    model_options = [ml_label, dl_label]
     
-    model_choice = st.sidebar.radio("예측에 사용할 모델을 선택하세요.", model_options)
+    # [수정된 로직]: 최고 성능 모델이 DNN일 경우, DNN을 기본 선택(index=0)으로 설정
+    if absolute_best_name == "Deep Learning (DNN)":
+        model_options = [dl_label, ml_label]
+        default_index = 0
+    else:
+        model_options = [ml_label, dl_label]
+        default_index = 0
+        
+    model_choice = st.sidebar.radio("예측에 사용할 모델을 선택하세요.", model_options, index=default_index)
     
     st.sidebar.write("")
     predict_btn = st.sidebar.button("분석 시작")
 
     if predict_btn:
+        # 1. 입력 데이터 전처리 (파생 변수 생성)
         input_data = pd.DataFrame([{
             'age': age,
             'gender': gender,
@@ -281,6 +319,7 @@ def page_prediction():
             'offline_listening': 1 if offline else 0
         }])
         
+        # 파생 변수 (EDA 및 전처리 단계에서 도출된 변수)
         input_data['ad_burden'] = input_data['ads_listened_per_week'] / (input_data['listening_time'] + 1)
         input_data['satisfaction_score'] = input_data['songs_played_per_day'] * (1 - input_data['skip_rate'])
         input_data['time_per_song'] = input_data['listening_time'] / (input_data['songs_played_per_day'] + 1)
@@ -288,36 +327,41 @@ def page_prediction():
         prob = 0.5
         threshold = 0.5
         
+        # 2. 선택된 모델로 예측 수행
         if model_choice == ml_label:
             model = load_ml_model()
             if model:
+                # ML 모델 (RandomForest/XGBoost 등) 예측
                 prob = model.predict_proba(input_data)[0, 1]
                 threshold = best_ml_threshold
             else:
-                st.error("ML 모델 파일(.pkl)을 찾을 수 없습니다.")
+                st.error("ML 모델 파일(.pkl)을 찾을 수 없습니다. (train_ml_model.ipynb 실행 필요)")
 
         elif model_choice == dl_label:
             dl_model, dl_scaler = load_dl_model_and_scaler()
             
             if dl_model and dl_scaler:
                 try:
+                    # DL 모델 전처리 및 예측
+                    # dl_scaler는 학습 시 사용된 모든 컬럼을 처리한다고 가정
                     scaled_input = dl_scaler.transform(input_data)
                     prediction = dl_model.predict(scaled_input)
                     prob = float(prediction[0][0])
                     
                     metrics = load_metrics()
+                    # DL 모델의 최적 임계값 로드
                     threshold = metrics.get('Deep Learning (DNN)', {}).get('Best Threshold', 0.5)
                     
                 except Exception as e:
-                    st.error(f"데이터 전처리 또는 예측 중 오류 발생: {e}")
-                    st.info("입력 데이터의 컬럼 형식이 학습 데이터와 일치하는지 확인이 필요합니다.")
+                    st.error(f"DL 예측 중 오류 발생: {e}")
             else:
-                st.error("DL 모델(.h5) 또는 전처리기(.pkl)를 불러올 수 없습니다.")
+                st.error("DL 모델(.h5) 또는 전처리기(.pkl)를 불러올 수 없습니다. (train_dl_model.ipynb 실행 필요)")
 
         st.markdown("### 🎯 AI 예측 진단")
         
         col1, col2, col3 = st.columns([1, 2, 2])
         
+        # 3. 예측 결과 시각화 및 리포트
         with col1:
             st.write("") 
             st.write("") 
@@ -339,6 +383,7 @@ def page_prediction():
 
         st.markdown("---")
 
+        # 4. 상세 분석 리포트 생성 (규칙 기반)
         negative_factors = [] 
         complex_factors = []
         positive_factors = []
@@ -346,7 +391,7 @@ def page_prediction():
         if skip_rate > 0.4: 
             negative_factors.append(f"<b>높은 스킵 비율({skip_rate*100:.0f}%)</b>: 추천 곡 불만족")
         if input_data['ad_burden'][0] > 0.25: 
-            negative_factors.append("<b>광고 피로도 경고</b>: 청취 시간 대비 잦은 광고")
+            negative_factors.append("<b>광고 피로도 경고</b>: 청취 시간 대비 잦은 광고 (Free User)")
         if listening_time < 20: 
             negative_factors.append(f"<b>이용 시간 부족({listening_time}분)</b>: 이탈 전조 증상")
         
@@ -356,7 +401,7 @@ def page_prediction():
             complex_factors.append("<b>⚡ '광고 충격' 패턴</b>: 짧게 듣고 광고만 듣다 나감")
 
         if offline: 
-            positive_factors.append("<b>오프라인 기능 활용</b>: 충성도 높음")
+            positive_factors.append("<b>오프라인 기능 활용</b>: 충성도 높음 (Premium)")
         if skip_rate < 0.2: 
             positive_factors.append("<b>취향 저격 성공</b>: 낮은 스킵률")
 
