@@ -17,8 +17,8 @@
         "F1-Score": 0.7161764705882353
     },
     "Deep Learning (DNN)": {
-        "Accuracy": 0.8015,
-        "F1-Score": 0.728711760707002,
-        "Best Threshold": 0.5
+        "Accuracy": 0.8135,
+        "F1-Score": 0.7446954140999316,
+        "Best Threshold": 0.5500000000000003
     }
 }
