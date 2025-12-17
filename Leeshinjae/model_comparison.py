@@ -111,7 +111,7 @@ with left_col:
     st.subheader("📊 핵심 성능 지표")
     small_cols = st.columns(3)
     metrics = [
-        {"title": "Accuracy", "value": "96.1%"},
+        {"title": "Accuracy", "value": "81.15%"},
         {"title": "Precision", "value": "94.8%"},
         {"title": "F1 Score", "value": "95.4%"}
     ]
