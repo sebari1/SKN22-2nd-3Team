@@ -50,7 +50,7 @@
 
 ## 1. 데이터 개요
 ### 1.1 데이터 출처 및 타깃 정의
-* 데이터 출처: Kaggle – *Spotify Dataset for Churn Analysis*
+* 데이터 출처: [Kaggle – Spotify Dataset for Churn Analysis](https://www.kaggle.com/datasets/nabihazahid/spotify-dataset-for-churn-analysis/)
 * 타깃 변수: `is_churned` (1=이탈, 0=유지)
 * 주요 컬럼: 사용자 정보(나이, 성별 등), 서비스 이용(청취시간, 재생 수 등), 수익/광고(요금제, 광고청취)
 
