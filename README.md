@@ -64,33 +64,33 @@
 | Origin | 8,000 × 12 | 25.89% |
 | Generated | 10,000 × 12 | 31.79% |
 
-![타깃 분포(이탈/유지)](01_preprocessing_report/images/3-1.png)
+![타깃 분포(이탈/유지)](EDA/JeongSehwan/images/3-1.png)
 
 ## 2. 데이터 품질 점검(Generated)
 Generated 데이터는 합성 과정 특성상 **비현실 값(음수)** 이 일부 발생하여 전처리 과정에서 처리하였습니다.
 * 결측치: 0%
 * 음수 값: `listening_time`(0.18%), `songs_played_per_day`(2.28%) -> **전처리 시 제거/보정**
 
-![청취 시간 분포](01_preprocessing_report/images/2-1.png)
-![일일 재생 곡 수 분포](01_preprocessing_report/images/2-2.png)
+![청취 시간 분포](EDA/JeongSehwan/images/2-1.png)
+![일일 재생 곡 수 분포](EDA/JeongSehwan/images/2-2.png)
 
 ## 3. 핵심 패턴 검증 (Insights)
 ### 3.1 요금제(subscription_type)별 이탈률
 * **Origin**: 요금제별 이탈률 차이 미미 (약 25% 내외)
 * **Generated**: **Free(46%)** > Student(26%) > Premium(5%) 순으로 뚜렷한 차이 보임.
-  ![요금제별 이탈률](01_preprocessing_report/images/fig04_subscription_churn_compare.png)
+  ![요금제별 이탈률](EDA/JeongSehwan/images/fig04_subscription_churn_compare.png)
 
 ### 3.2 오프라인 사용(offline_listening) 여부
 * **Generated**: 오프라인 미사용(45.59%) vs 사용(17.92%). **오프라인 기능 사용이 강력한 이탈 방지(Lock-in) 효과**를 가짐.
-  ![오프라인 사용 여부별 이탈률](01_preprocessing_report/images/fig05_offline_churn_compare.png)
+  ![오프라인 사용 여부별 이탈률](EDA/JeongSehwan/images/fig05_offline_churn_compare.png)
 
 ### 3.3 광고 피로(ads_listened_per_week) 임계점
 * **Generated**: 주간 광고 **15회 이상** 청취 시 이탈률 급증 (Threshold 패턴).
-  ![ads 임계점 비교](01_preprocessing_report/images/fig08_ads_threshold_compare.png)
+  ![ads 임계점 비교](EDA/JeongSehwan/images/fig08_ads_threshold_compare.png)
 
 ### 3.4 상호작용: 요금제 × 오프라인
 * `Free` 사용자 중 오프라인 모드를 사용하지 못함에도 사용하는 것으로 표기된(과거 체험 기록 추정) 케이스에서 이탈률이 낮아지는 현상 발견 -> 복합적 행동 패턴 분석 필요.
-  ![요금제×오프라인 이탈률 히트맵](01_preprocessing_report/images/fig09_sub_offline_heatmap.png)
+  ![요금제×오프라인 이탈률 히트맵](EDA/JeongSehwan/images/fig09_sub_offline_heatmap.png)
 
 ---
 
