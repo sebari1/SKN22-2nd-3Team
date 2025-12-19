@@ -166,3 +166,11 @@ SKN22-2nd-3Team/
 ├── 02_training_report/      # 모델 학습 결과 리포트
 └── README.md              # 프로젝트 메인 설명 파일 (본 파일)
 ```
+---
+![메인 화면](EDA/JeongSehwan/images/github_1.gif)
+---
+![메인 화면](EDA/JeongSehwan/images/github_2.gif)
+---
+![메인 화면](EDA/JeongSehwan/images/github_3.gif)
+---
+![메인 화면](EDA/JeongSehwan/images/github_4.gif)
