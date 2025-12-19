@@ -138,10 +138,10 @@ div[data-testid="stColumn"] div[data-testid="stButton"] > button:hover {
 
 # 모델 경로 설정 (Leeshinjae 폴더 기준)
 MODEL_BASE_PATH = "../JangWansik"
-ML_MODEL_PATH = os.path.join(MODEL_BASE_PATH, "models", "spotify_churn_model.pkl")
-DL_MODEL_PATH = os.path.join(MODEL_BASE_PATH, "models", "spotify_dl_model.h5")
-DL_SCALER_PATH = os.path.join(MODEL_BASE_PATH, "models", "dl_preprocessor.pkl")
-METRICS_PATH = os.path.join(MODEL_BASE_PATH, "data", "model_metrics.json")
+ML_MODEL_PATH = os.path.join(MODEL_BASE_PATH, "03_trained_model", "spotify_churn_model.pkl")
+DL_MODEL_PATH = os.path.join(MODEL_BASE_PATH, "03_trained_model", "spotify_dl_model.onnx")
+DL_SCALER_PATH = os.path.join(MODEL_BASE_PATH, "03_trained_model", "spotify_dl_model.onnx.data")
+METRICS_PATH = os.path.join(MODEL_BASE_PATH, "03_trained_model", "model_metrics.json")
 
 def simulate_ml_prediction(input_data):
     """ML 모델 시뮬레이션 예측 (규칙 기반)"""

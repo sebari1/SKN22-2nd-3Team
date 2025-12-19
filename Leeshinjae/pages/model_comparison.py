@@ -7,7 +7,7 @@ st.set_page_config(page_title="모델 성능 비교", page_icon="📊", layout="
 
 # 1. 데이터 로드 함수 (JSON 연동)
 def load_metrics():
-    metrics_path = os.path.join("..", "JangWansik", "data", "model_metrics.json")
+    metrics_path = os.path.join("..", "JangWansik", "03_trained_model", "model_metrics.json")
     try:
         if os.path.exists(metrics_path):
             with open(metrics_path, 'r', encoding='utf-8') as f:
